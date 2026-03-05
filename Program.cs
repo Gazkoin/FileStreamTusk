@@ -18,7 +18,6 @@ namespace FileStreamTusk
             Console.WriteLine("Путь к исходному текстовому файлу: " + import);
             Console.WriteLine("Путь к исходному текстовому файлу: " + export);
 
-            const int BUFFER_SIZE = 8192;
             int lineNumber = 0;
             int errorCount = 0;
 
@@ -50,7 +49,7 @@ namespace FileStreamTusk
 
                         // Прогресс (опционально, можно убрать)
                         if (lineNumber % 500 == 0)
-                            Console.Write(".");
+                            Console.Write("|");
                     }
 
                     // Итоговая строка в конце файла
