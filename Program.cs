@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Runtime;
+using System.Text;
 
 
 namespace FileStreamTusk
@@ -11,30 +13,58 @@ namespace FileStreamTusk
     {
         static void Main(string[] args)
         {
-            string import = Choice();
+            string import = Choice(); // возвращает стринг 
             string export = Choice();
             Console.WriteLine("Путь к исходному текстовому файлу: " + import);
             Console.WriteLine("Путь к исходному текстовому файлу: " + export);
 
             const int BUFFER_SIZE = 8192;
+            int lineNumber = 0;
+            int errorCount = 0;
 
-            using (var source = File.OpenRead(import)) 
-            using (var dest = File.Create(export))
+            using (var reader = new StreamReader(import, Encoding.UTF8))
             {
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int bytesRead;
-
-                while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
+                using (var writer = new StreamWriter(export, false, Encoding.UTF8))
                 {
-                    dest.Write(buffer, 0, bytesRead);
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (string.IsNullOrWhiteSpace(line))
+                            continue;
+
+                        // Заменяем все вхождения (регистронезависимо)
+                        string processed = line;
+                        int replacementsThisLine = 0;
+
+                        // Простой способ посчитать и заменить (можно улучшить позже)
+                        while (processed.IndexOf("ERROR", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            processed = processed.Replace("ERROR", "ОШИБКА", StringComparison.OrdinalIgnoreCase);
+                            replacementsThisLine++;
+                        }
+
+                        errorCount += replacementsThisLine;
+
+                        lineNumber++;
+                        writer.WriteLine($"[{lineNumber:000000}] {processed}");
+
+                        // Прогресс (опционально, можно убрать)
+                        if (lineNumber % 500 == 0)
+                            Console.Write(".");
+                    }
+
+                    // Итоговая строка в конце файла
+                    writer.WriteLine("");
+                    writer.WriteLine($"Слово ERROR (или error) встречено {errorCount} раз");
                 }
+
+                Console.WriteLine();
+                Console.WriteLine($"Обработано строк: {lineNumber}");
+                Console.WriteLine($"Заменено вхождений ERROR: {errorCount}");
             }
-            Console.WriteLine("Копирование завершено!");
-
-
 
         }
-
+        
         public static string Choice()
         {
             try
@@ -116,11 +146,5 @@ namespace FileStreamTusk
                 Console.WriteLine($"\t - {fi.Name}\n");
             }
         }
-
-
-
-
-
-
     }
 }
